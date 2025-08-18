@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Flask application with uv dependency management designed for containerized deployment to Google Cloud Run. The project uses `just` for task automation, Docker Compose for development, and supports multiple Python versions through `.python-version`.
+Flask application with uv dependency management designed for containerized deployment. The project uses `just` for task automation, Docker Compose for development, and supports multiple Python versions through `.python-version`.
 
 ## Environment Setup
 
@@ -21,13 +21,9 @@ just test-prod [port] # Test production build locally
 just update           # Update dependencies using dockerized uv
 ```
 
-### Build & Deploy
+### Build
 ```bash
 just build [platform] # Build Docker image (defaults to host platform)
-just deploy           # Deploy to Cloud Run (forces linux/amd64)
-just destroy          # Delete Cloud Run service to avoid costs
-just status           # Check deployment status
-just logs [limit]     # View Cloud Run logs (default: 50)
 ```
 
 ### Maintenance
@@ -39,9 +35,7 @@ just clean            # Clean up Docker images
 
 ### Configuration Management
 All configuration is managed through environment variables in `.env`:
-- **GCP_PROJECT_ID**: Defaults to current gcloud project
-- **GCP_REGION**: Deployment region (europe-west3)
-- **GCP_SERVICE_NAME**: Cloud Run service name (gcp-python-uv)
+- **SERVICE_NAME**: Application service name (python-uv-app)
 - **PORT**: Application port (8080)
 - **DEV_LOCAL_PORT**: Local development port (8082)
 - **PYTHON_IMAGE**: Auto-derived from `.python-version`
@@ -56,7 +50,6 @@ All configuration is managed through environment variables in `.env`:
 - **Platform flexibility**: 
   - `just build` - Uses host platform (fast local builds)
   - `just build linux/amd64` - For x86_64 servers
-  - `just deploy` - Always uses linux/amd64 for Cloud Run
 - **Multi-stage builds** with uv for fast dependency installation
 - **Security**: Runs as non-root user (appuser)
 
@@ -81,21 +74,9 @@ error: environment variable `VARIABLE_NAME` not present
 ```
 **Solution**: Ensure `.env` file exists with all required variables
 
-### Platform Architecture Mismatch
-```
-exec format error on Cloud Run
-```
-**Solution**: Deploy command automatically uses `--platform linux/amd64`
-
 ### Port Already in Use
 ```bash
 just dev 8083  # Use alternative port
-```
-
-### Authentication Issues
-```bash
-gcloud auth login           # Authenticate with Google Cloud
-gcloud config set project PROJECT_ID  # Set default project
 ```
 
 ## Testing Python Version Changes
@@ -111,30 +92,16 @@ gcloud config set project PROJECT_ID  # Set default project
    just test-prod
    ```
 
-3. **Deploy to Cloud Run**:
-   ```bash
-   just deploy
-   ```
-
-4. **Verify deployment**:
-   ```bash
-   just status
-   curl $(just status | grep URL | cut -d' ' -f3)
-   ```
-
 ## Best Practices
 
-1. **Always use `.env`**: No hardcoded defaults in justfile
+1. **Always use `.env`**: No hardcoded configuration
 2. **Test locally first**: Use `just dev` for development
-3. **Clean up resources**: Run `just destroy` when done testing
-4. **Monitor costs**: Cloud Run charges for running services
-5. **Version control**: `.env` is gitignored, `.env.example` is tracked
+3. **Version control**: `.env` is gitignored, `.env.example` is tracked
 
 ## Security Notes
 
 - `.env` file is gitignored (never commit secrets)
 - Docker containers run as non-root user
-- Cloud Run deployments use `--allow-unauthenticated` by default
 - All secrets should be environment variables
 
 ## Project Structure
@@ -154,8 +121,5 @@ gcloud config set project PROJECT_ID  # Set default project
 
 ## Design Patterns Used
 
-- **Template Method**: Private recipes in justfile (`_validate-deployment`)
-- **Factory Pattern**: `_build-and-push` creates standardized images
-- **Singleton Pattern**: `_setup-registry` ensures single repository
 - **Configuration as Code**: All settings in `.env`
 - **Single Source of Truth**: `.python-version` for Python version

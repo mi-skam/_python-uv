@@ -1,9 +1,6 @@
-# gcp-python-uv
+# python-uv
 
-[![CI](https://github.com/mi-skam/_gcp-python-uv/actions/workflows/ci.yml/badge.svg)](https://github.com/mi-skam/_gcp-python-uv/actions/workflows/ci.yml)
-[![Release and Deploy](https://github.com/mi-skam/_gcp-python-uv/actions/workflows/release.yml/badge.svg)](https://github.com/mi-skam/_gcp-python-uv/actions/workflows/release.yml)
-
-Flask application template for Google Cloud Run deployment using Docker, uv package management, and just for task automation.
+Flask application template for containerized deployment using Docker, uv package management, and just for task automation.
 
 **🚀 Zero Configuration Required** - Clone and run `just dev` to get started immediately!
 
@@ -12,8 +9,8 @@ Flask application template for Google Cloud Run deployment using Docker, uv pack
 - Docker
 - [just](https://github.com/casey/just)
 
-**For Cloud Run deployment (optional):**
-- [gcloud CLI](https://cloud.google.com/sdk/docs/install)
+**For cloud deployment (optional):**
+- Cloud provider CLI tools
 - [jq](https://jqlang.github.io/jq/) - For log formatting
 
 Note: No local Python or uv installation required.
@@ -25,7 +22,7 @@ Note: No local Python or uv installation required.
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd gcp-python-uv
+cd python-uv
 
 # Start development server immediately (http://localhost:8082)
 just dev
@@ -33,25 +30,14 @@ just dev
 
 **That's it!** The project uses sensible defaults and requires no configuration for local development.
 
-### 2. Deploy to Cloud Run (Optional)
+### 2. Build for Production
 
 ```bash
-# One-time setup: authenticate and set project
-gcloud auth login
-gcloud config set project YOUR_PROJECT_ID
+# Build production image
+just build
 
-# Deploy with zero configuration
-just deploy
-
-# Check deployment
-just status
-```
-
-### 3. Clean Up
-
-```bash
-# Remove Cloud Run service (stop billing)
-just destroy
+# Test production build locally
+just test-prod
 ```
 
 ## Available Commands
@@ -63,25 +49,18 @@ just destroy
 | `just test-prod [port]` | Test production build locally |
 | `just update` | Update Python dependencies |
 
-### Build & Deploy
+### Build & Maintenance
 | Command | Description |
 |---------|-------------|
 | `just build [platform]` | Build Docker image (optional platform) |
-| `just deploy` | Deploy to Google Cloud Run |
-| `just destroy` | Delete Cloud Run service |
-| `just status` | Show deployment status and URL |
-| `just logs [limit]` | View service logs (default: 50) |
 | `just clean` | Remove local Docker images |
 
 ## Configuration (Optional)
 
-The project works with zero configuration using these defaults:
+The project works with minimal configuration using these defaults:
 
-- **Region**: `europe-west3`
-- **Service Name**: `gcp-python-uv`
+- **Service Name**: `python-uv-app`
 - **Ports**: `8080` (production), `8082` (development)
-- **Registry**: `cloud-run-apps`
-- **Project**: Uses your current `gcloud` project
 
 **To customize**: Copy `.env.example` to `.env` and modify any values.
 
@@ -96,7 +75,6 @@ cat .python-version
 # Change to Python 3.11
 echo "3.11" > .python-version
 just build
-just deploy
 
 # Change to Python 3.13
 echo "3.13" > .python-version
@@ -124,26 +102,16 @@ just build           # Build container
 just test-prod       # Run production container locally
 ```
 
-### Deployment Workflow
-
-```bash
-just build linux/amd64  # Build for Cloud Run (optional, deploy does this)
-just deploy            # Deploy to Cloud Run
-just status           # Get service URL
-just logs            # View logs
-just destroy         # Clean up when done
-```
 
 ## Platform Build Strategy
 
-The project intelligently handles different platforms:
+The project supports different platforms:
 
 | Command | Platform | Use Case |
 |---------|----------|----------|
 | `just build` | Host platform | Fast local development |
-| `just build linux/amd64` | x86_64 | Cloud Run, most servers |
+| `just build linux/amd64` | x86_64 | Most cloud platforms, servers |
 | `just build linux/arm64` | ARM64 | ARM servers, some Macs |
-| `just deploy` | Always linux/amd64 | Cloud Run requirement |
 
 ## API Endpoints
 
@@ -156,7 +124,7 @@ The Flask application provides:
 Example response from `/`:
 ```json
 {
-  "message": "Hello from Cloud Run!",
+  "message": "Hello from the cloud!",
   "python_version": "3.12.0 (main, ...)",
   "timestamp": "2024-01-01T12:00:00.000000",
   "deployed_with": "uv + Docker"
@@ -176,37 +144,10 @@ Solution: Ensure `.env` file exists with all required variables
 just dev 8083  # Use alternative port
 ```
 
-### Authentication Issues
-```bash
-gcloud auth login
-gcloud config set project YOUR_PROJECT_ID
-```
 
-### Platform Mismatch on Cloud Run
-The deployment automatically uses `linux/amd64` platform
+## CI/CD and Automated Testing
 
-### View Cloud Run Service in Console
-```
-https://console.cloud.google.com/run?project=YOUR_PROJECT_ID
-```
-
-## CI/CD and Automated Deployment
-
-This repository includes GitHub Actions workflows for automated testing and deployment:
-
-### 🚀 Automated Release Workflow
-
-When you push a version tag (`v*`), the system automatically:
-1. Builds and tests the Docker image
-2. Pushes to Google Artifact Registry
-3. Deploys to Cloud Run with the version tag
-4. Creates a GitHub release with deployment info
-
-```bash
-# Create and push a new release
-git tag v0.2.0
-git push origin v0.2.0
-```
+This repository includes GitHub Actions workflows for automated testing:
 
 ### 🧪 Continuous Integration
 
@@ -215,22 +156,12 @@ Pull requests and main branch pushes trigger:
 - Docker build verification
 - Flask application health checks
 
-### 📋 CI/CD Setup
-
-To enable automated deployments, see [`.github/SETUP.md`](./.github/SETUP.md) for:
-- Google Cloud service account creation
-- GitHub repository secrets configuration
-- Artifact Registry setup
-- Monitoring and cost management
-
 ### 🏷️ Release Management
 
 The system supports semantic versioning:
 - `v1.0.0` - Major releases
 - `v1.1.0` - Minor features
 - `v1.1.1` - Patches and fixes
-
-Each release creates a permanent deployment with version tracking.
 
 ## License
 
@@ -240,5 +171,4 @@ MIT
 
 For issues or questions:
 - Review troubleshooting section above
-- Check [CI/CD Setup Guide](./.github/SETUP.md) for deployment issues
 - Open an issue on GitHub
