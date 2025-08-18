@@ -9,7 +9,7 @@ app = Flask(__name__)
 @app.route('/')
 def hello():
     return jsonify({
-        "message": "Hello from Cloud Run!",
+        "message": "Hello from the cloud!",
         "python_version": sys.version,
         "timestamp": datetime.now().isoformat(),
         "deployed_with": "uv + Docker"
