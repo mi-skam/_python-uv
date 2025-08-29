@@ -1,10 +1,22 @@
 [project]
-name = "gcp-python-uv"
-version = "0.1.0"
-description = "Serverless Python app on Google Cloud Run"
-readme = "README.md"
-requires-python = ">=3.12"
+name = "python-example"
+version = "0"
+requires-python = "==3.12.*"
 dependencies = [
-    "flask>=3.1.1",
-    "gunicorn>=23.0.0",
+    "flask",
+    "gunicorn",
+    "python-dotenv",
+    "psycopg2-binary",
+    "sqlalchemy",
 ]
+
+[dependency-groups]
+dev = ["pytest", "coverage", "ruff", "ty", "httpie"]
+
+[build-system]
+requires = ["uv-build"]
+build-backend = "uv_build"
+
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "pytest-cov>=5.0.0", "ruff>=0.7.0", "mypy>=1.13.0"]

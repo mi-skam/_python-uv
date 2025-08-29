@@ -64,13 +64,6 @@ logs/
 # Docker
 .dockerignore
 
-# Google Cloud
-.gcloudignore
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-
 # Temporary files
 tmp/
 temp/

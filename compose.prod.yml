@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: ${SERVICE_NAME}:latest
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - PORT=${PORT}
+      - FLASK_DEBUG=false
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - SERVICE_NAME=${SERVICE_NAME}
+      - HOSTNAME=${HOSTNAME}
+      - APP_STATUS=${APP_STATUS}
+      - HEALTH_STATUS=${HEALTH_STATUS}
+      - DATABASE_STATUS_CONNECTED=${DATABASE_STATUS_CONNECTED}
+      - DATABASE_ERROR_MESSAGE=${DATABASE_ERROR_MESSAGE}
+      - DATABASE_UNAVAILABLE_MESSAGE=${DATABASE_UNAVAILABLE_MESSAGE}
+      - DEPLOYED_WITH=${DEPLOYED_WITH}
+      - REQUEST_HISTORY_LIMIT=${REQUEST_HISTORY_LIMIT}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      [
+        "/app/bin/gunicorn",
+        "--bind",
+        ":${PORT}",
+        "--workers",
+        "1",
+        "--threads",
+        "8",
+        "python_example.app:app",
+      ]
+
+volumes:
+  postgres_data:
