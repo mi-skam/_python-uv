@@ -4,43 +4,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Flask application with uv dependency management and Docker containerization. Uses `just` for task automation.
+Python Flask template demonstrating modern development practices with:
+- **Flask web framework** with PostgreSQL database integration
+- **uv dependency management** for fast package handling
+- **Docker containerization** with multi-stage builds
+- **just task automation** for streamlined workflows  
+- **SQLAlchemy ORM** with automatic request logging
+- **Comprehensive testing** with pytest and coverage
+- **Quality assurance** with ruff linting and mypy type checking
 
 ## Environment Setup
 
 1. **Copy environment template**: `cp .env.example .env`
-2. **Configure settings** in `.env` (required - no defaults)
+2. **Configure settings** in `.env` (required - fail-fast approach)
 3. **Python version**: 3.12 (specified in pyproject.toml)
 
 ## Key Commands
 
+### Development Workflow
 ```bash
-# Development
-just serve            # Start development server
-just prod             # Run production server with gunicorn
-just req [path]       # Send HTTP request to development server
+just install          # Install dependencies using uv
+just dev              # Start Flask app + PostgreSQL (port 8098)
+just req [path]       # Send HTTP request to running server
 just browser          # Open development server in browser
+```
 
-# Testing & Quality
+### Quality Assurance
+```bash
 just test             # Run tests with pytest
-just cov              # Run tests with coverage
-just lint             # Run linters (ruff)
-just typing           # Check types
-just check-all        # Run all checks (lint, coverage, typing)
+just cov              # Run tests with coverage reporting  
+just lint             # Run ruff linter and formatter
+just typing           # Run mypy type checking
+just check-all        # Run all quality checks (lint + coverage + typing)
+```
 
-# Lifecycle
-just install          # Install dependencies
-just update           # Update dependencies
-just fresh            # Clean install from scratch
-just clear            # Remove temporary files
-just build-container  # Build Docker image
+### Production & Deployment  
+```bash
+just prod             # Run production server with gunicorn
+just prod-container   # Build and run production Docker container
+just build-container  # Build multi-platform Docker image
+```
+
+### Lifecycle Management
+```bash
+just update           # Update Python dependencies
+just fresh            # Clean install from scratch  
+just clear            # Remove temporary files and caches
 ```
 
 ## Configuration
 
 Required environment variables in `.env`:
-- **SERVICE_NAME**: python-docker-uv
+- **SERVICE_NAME**: python-uv (application identifier)
 - **PORT**: Application port (8098)
+- **FLASK_ENV**: development or production
+- **POSTGRES_USER/PASSWORD/DB/HOST/PORT**: Database connection settings
 - **_UV_RUN_ARGS_TEST**: Optional test runner args
 - **_UV_RUN_ARGS_SERVE**: Optional server runner args
 
@@ -51,7 +69,9 @@ Required environment variables in `.env`:
 ├── src/
 │   └── python_example/
 │       ├── __init__.py
-│       └── app.py          # Flask application
+│       ├── app.py          # Flask application with database integration
+│       ├── models.py       # SQLAlchemy database models
+│       └── wsgi.py         # WSGI entry point for production
 ├── tests/
 │   ├── __init__.py
 │   └── test_main.py        # Test suite
@@ -72,10 +92,16 @@ Required environment variables in `.env`:
 
 ## Flask Application
 
-The app (`src/python_example/app.py`) provides three endpoints:
-- `/` - System info with timestamp, Python version, and deployment info
-- `/health` - Health check endpoint
+The app (`src/python_example/app.py`) demonstrates database integration:
+- `/` - System info with request logging to PostgreSQL database
+- `/health` - Health check endpoint  
 - `/echo/<text>` - Echo service with text reversal and length
+
+**Key Features:**
+- **Database persistence** - All requests are logged to PostgreSQL
+- **Automatic schema creation** - Tables created via SQLAlchemy metadata
+- **Error handling** - Graceful degradation if database unavailable
+- **Request history** - Shows last 10 requests from database
 
 ## Testing
 
@@ -103,13 +129,24 @@ error: environment variable `VARIABLE_NAME` not present
 
 ### Port Already in Use
 ```bash
-PORT=8099 just serve  # Use alternative port via environment variable
+PORT=8099 just dev  # Use alternative port via environment variable
+```
+
+### Database Connection Issues
+```bash
+# Restart database container
+docker compose down
+just dev  # Will restart PostgreSQL automatically
+
+# Clear database volumes if needed
+docker compose down -v
+just dev  # Creates fresh database
 ```
 
 ## Best Practices
 
 1. **Always use `.env`**: No hardcoded configuration (fail-fast approach)
-2. **Test locally first**: Use `just serve` for development
+2. **Test locally first**: Use `just dev` for development
 3. **Run checks**: Use `just check-all` before committing
 4. **CI/CD**: All PRs must pass `just check-all` to merge
 
