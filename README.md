@@ -1,36 +1,38 @@
-# python-uv
+# python-docker-uv
 
-Flask application template for containerized deployment using Docker, uv package management, and just for task automation.
-
-**🚀 Zero Configuration Required** - Clone and run `just dev` to get started immediately!
+Flask application with Docker containerization, uv dependency management, and just for task automation.
 
 ## Prerequisites
 
 - Docker
 - [just](https://github.com/casey/just)
 
-**For cloud deployment (optional):**
-- Cloud provider CLI tools
-- [jq](https://jqlang.github.io/jq/) - For log formatting
-
-Note: No local Python or uv installation required.
+**That's it!** No local Python, uv, or dev tools installation required - everything runs in Docker containers.
 
 ## Quick Start
 
-### 1. Start Development (Zero Configuration)
+### 1. Setup Environment
 
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd python-uv
+cd python-docker-uv
 
-# Start development server immediately (http://localhost:8082)
+# Copy environment template and configure
+cp .env.example .env
+```
+
+### 2. Install Dependencies and Start Development
+
+```bash
+# Install dependencies (like npm install)
+just install
+
+# Start development server (http://localhost:8082)
 just dev
 ```
 
-**That's it!** The project uses sensible defaults and requires no configuration for local development.
-
-### 2. Build for Production
+### 3. Build for Production
 
 ```bash
 # Build production image
@@ -42,29 +44,30 @@ just test-prod
 
 ## Available Commands
 
-### Development
 | Command | Description |
 |---------|-------------|
+| `just install` | Install dependencies (like npm install) |
 | `just dev [port]` | Start dev server with live reload (default: 8082) |
+| `just test` | Run tests with pytest |
+| `just check` | Run linting and type checking |
+| `just format` | Format code with ruff |
+| `just build [platform]` | Build Docker image (optional platform) |
 | `just test-prod [port]` | Test production build locally |
 | `just update` | Update Python dependencies |
-
-### Build & Maintenance
-| Command | Description |
-|---------|-------------|
-| `just build [platform]` | Build Docker image (optional platform) |
 | `just clean` | Remove local Docker images |
 
-## Configuration (Optional)
+## Configuration
 
-The project works with minimal configuration using these defaults:
+Required environment variables in `.env`:
 
-- **Service Name**: `python-uv-app`
-- **Ports**: `8080` (production), `8082` (development)
+```bash
+SERVICE_NAME=python-docker-uv
+PORT=8080
+DEV_LOCAL_PORT=8082
+FLASK_DEBUG=false
+```
 
-**To customize**: Copy `.env.example` to `.env` and modify any values.
-
-### Python Version Management
+## Python Version Management
 
 Python version is controlled by `.python-version` file:
 
@@ -80,45 +83,22 @@ just build
 echo "3.13" > .python-version
 ```
 
-The system automatically:
-- Derives the Docker image (`python:X.Y-slim`)
-- Manages version-specific dependencies
-- Ensures consistency across all environments
-
 ## Development Workflow
 
-### Local Development
-
 ```bash
-just dev
+just install    # Install dependencies
+just dev        # Start development server with live reload
+just test       # Run tests
+just check      # Lint and type check
+just format     # Format code
 ```
-
-Uses Docker Compose with watch mode for automatic file syncing and live reload.
-
-### Testing Production Build
-
-```bash
-just build           # Build container
-just test-prod       # Run production container locally
-```
-
-
-## Platform Build Strategy
-
-The project supports different platforms:
-
-| Command | Platform | Use Case |
-|---------|----------|----------|
-| `just build` | Host platform | Fast local development |
-| `just build linux/amd64` | x86_64 | Most cloud platforms, servers |
-| `just build linux/arm64` | ARM64 | ARM servers, some Macs |
 
 ## API Endpoints
 
 The Flask application provides:
 
 - `GET /` - Returns system info and timestamp
-- `GET /health` - Health check endpoint
+- `GET /health` - Health check endpoint  
 - `GET /echo/<text>` - Echo service for testing
 
 Example response from `/`:
@@ -130,6 +110,29 @@ Example response from `/`:
   "deployed_with": "uv + Docker"
 }
 ```
+
+## Platform Build Strategy
+
+| Command | Platform | Use Case |
+|---------|----------|----------|
+| `just build` | Host platform | Fast local development |
+| `just build linux/amd64` | x86_64 | Most cloud platforms, servers |
+| `just build linux/arm64` | ARM64 | ARM servers, some Macs |
+
+## Testing
+
+The project includes comprehensive tests:
+
+```bash
+just test           # Run all tests
+just test -v        # Verbose output
+just check          # Lint and type check
+```
+
+Tests cover:
+- All Flask endpoints
+- Error handling
+- Response validation
 
 ## Troubleshooting
 
@@ -144,31 +147,14 @@ Solution: Ensure `.env` file exists with all required variables
 just dev 8083  # Use alternative port
 ```
 
+## CI/CD
 
-## CI/CD and Automated Testing
-
-This repository includes GitHub Actions workflows for automated testing:
-
-### 🧪 Continuous Integration
-
-Pull requests and main branch pushes trigger:
+GitHub Actions workflow includes:
 - Multi-version Python testing (3.9, 3.11, 3.12)
 - Docker build verification
 - Flask application health checks
-
-### 🏷️ Release Management
-
-The system supports semantic versioning:
-- `v1.0.0` - Major releases
-- `v1.1.0` - Minor features
-- `v1.1.1` - Patches and fixes
+- Linting and type checking
 
 ## License
 
 MIT
-
-## Support
-
-For issues or questions:
-- Review troubleshooting section above
-- Open an issue on GitHub
