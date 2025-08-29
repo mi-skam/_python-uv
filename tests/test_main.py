@@ -1,7 +1,9 @@
 import json
 import os
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from src.python_example.app import app
 
 
@@ -55,7 +57,7 @@ def test_root_endpoint_database_dependent(client):
     """Test the root endpoint - works with database, fails without."""
     response = client.get("/")
     data = json.loads(response.data)
-    
+
     if response.status_code == 200:
         # Database is available - test successful response
         assert "environment" in data
@@ -71,7 +73,7 @@ def test_root_endpoint_database_dependent(client):
         assert "details" in data
     else:
         # Unexpected status code
-        assert False, f"Unexpected status code: {response.status_code}"
+        raise AssertionError(f"Unexpected status code: {response.status_code}")
 
 
 @patch("src.python_example.app.get_db_session")
@@ -80,18 +82,18 @@ def test_root_endpoint_with_database(mock_db_session, client):
     # Mock database session and query
     mock_session = MagicMock()
     mock_db_session.return_value = mock_session
-    
+
     # Mock query results (empty list of recent requests)
     mock_query = MagicMock()
     mock_session.query.return_value = mock_query
     mock_query.order_by.return_value = mock_query
     mock_query.limit.return_value = mock_query
     mock_query.all.return_value = []
-    
+
     response = client.get("/")
     assert response.status_code == 200
     data = json.loads(response.data)
-    
+
     # Check expected fields are present
     assert "environment" in data
     assert "debug_mode" in data
@@ -102,7 +104,7 @@ def test_root_endpoint_with_database(mock_db_session, client):
     assert "service_name" in data
     assert "recent_requests" in data
     assert data["recent_requests"] == []
-    
+
     # Verify database operations were called
     mock_session.add.assert_called_once()
     mock_session.commit.assert_called_once()
@@ -114,7 +116,7 @@ def test_root_endpoint_database_error(mock_db_session, client):
     """Test the root endpoint handles database errors gracefully."""
     # Mock database session to raise an exception
     mock_db_session.side_effect = Exception("Database connection failed")
-    
+
     response = client.get("/")
     assert response.status_code == 503
     data = json.loads(response.data)
