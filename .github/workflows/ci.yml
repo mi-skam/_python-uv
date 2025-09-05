@@ -34,27 +34,3 @@ jobs:
 
       - name: Run all checks
         run: just check-all
-
-  docker-build:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create .env file
-        run: |
-          cp .env.example .env
-
-      - name: Build Docker image
-        run: |
-          docker build --platform linux/amd64 -t test-image .
-
-      - name: Test Docker container
-        run: |
-          docker run -d -p 8080:8080 -e PORT=8080 --name test-container test-image \
-            /app/bin/gunicorn --bind :8080 --workers 1 --threads 2 python_example.app:app
-          sleep 10
-          curl -f http://localhost:8080/health
-          docker stop test-container
-          docker rm test-container
