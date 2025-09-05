@@ -298,3 +298,33 @@ deploy-staging:
     docker build -t myapp:staging .
     docker push registry.example.com/myapp:staging
 ```
+
+## Appendix A: GitHub Container Registry (ghcr.io) Configuration
+
+To push Docker images to GitHub Container Registry (ghcr.io), you need to authenticate Docker with GitHub and configure the registry `$GIT_REGISTRY`:
+
+### One-liner Authentication
+```bash
+gh auth token | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin
+```
+### Configure `$GIT_REGISTRY`
+Look at default values of [.env.example](.env.example)
+
+### Prerequisites
+- GitHub CLI (`gh`) installed and authenticated
+- Docker installed and running
+- Repository permissions to push packages
+
+### Required Token Permissions
+If you encounter "permission_denied" errors, ensure your GitHub token has these scopes:
+- `write:packages` - Upload packages to GitHub Package Registry
+- `read:packages` - Download packages from GitHub Package Registry  
+- `delete:packages` - Delete packages from GitHub Package Registry (optional)
+- `repo` - Full control of private repositories (if pushing to private repos)
+
+To check/update your token permissions:
+1. Go to GitHub Settings → Developer settings → Personal access tokens
+2. Generate a new token or update existing with required scopes
+3. Re-authenticate: `gh auth refresh -s write:packages,read:packages`
+
+Once authenticated, you can use `just push-container` to push images to ghcr.io.

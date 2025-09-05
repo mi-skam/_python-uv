@@ -1,10 +1,16 @@
 # justfile for python-docker-uv project
 
-# Load environment variables from .env file if it exists
+# Load environment variables from .env file
 set dotenv-load := true
 
 SERVICE_NAME := env_var("SERVICE_NAME")
 PORT := env_var("PORT")
+GIT_USER := env_var("GIT_USER")
+GIT_REGISTRY := env_var("GIT_REGISTRY")
+GIT_HASH := `git rev-parse --short HEAD`
+GIT_REPO := `basename $(git rev-parse --show-toplevel)`
+
+HOST := env("HOST", "127.0.0.1")
 ARGS_TEST := env("_UV_RUN_ARGS_TEST", "")
 ARGS_SERVE := env("_UV_RUN_ARGS_SERVE", "")
 
@@ -43,6 +49,11 @@ typing:
 [group('qa')]
 check-all: lint cov typing
 
+# Test deployment locally with git hash
+[group('qa')]
+test-deploy: push-container
+    IMAGE_TAG={{GIT_HASH}} GIT_REGISTRY={{GIT_REGISTRY}} GIT_USER={{GIT_USER}} GIT_REPO={{GIT_REPO}} docker compose -f compose.prod.yml up --remove-orphans -d
+
 # Run development server
 [group('run')]
 dev:
@@ -78,12 +89,12 @@ _http *args:
 # Send HTTP request to development server
 [group('run')]
 req path="" *args:
-    @just _http {{ args }} http://127.0.0.1:{{ PORT }}/{{ path }}
+    @just _http {{ args }} http://{{HOST}}:{{ PORT }}/{{ path }}
 
 # Open development server in web browser
 [group('run')]
 browser:
-    uv run -m webbrowser -t http://127.0.0.1:{{ PORT }}
+    uv run -m webbrowser -t http://{{HOST}}:{{ PORT }}
 
 # Update dependencies
 [group('lifecycle')]
@@ -106,8 +117,16 @@ clear:
 fresh: clear install
 
 # Build Docker image if not exists or if dependencies changed (defaults to host platform for speed)
-[group('lifecycle')]
+[group('deploy')]
 build-container:
-    docker buildx build --platform linux/amd64,linux/arm64 -t {{SERVICE_NAME}}:latest .
+    docker buildx build --platform linux/amd64,linux/arm64 -t {{GIT_REPO}}:latest .
+
+[group('deploy')]
+push-container: build-container
+    #!/usr/bin/env bash
+    docker tag {{GIT_REPO}}:latest {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:latest
+    docker tag {{GIT_REPO}}:latest {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:{{GIT_HASH}}
+    docker push {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:latest
+    docker push {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:{{GIT_HASH}}
 
     
