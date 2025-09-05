@@ -3,7 +3,16 @@
 # Load environment variables from .env file if it exists
 set dotenv-load := true
 
+## Service Configuration
 SERVICE_NAME := env_var("SERVICE_NAME")
+
+## Git Information
+GIT_HASH := `git rev-parse --short HEAD`
+GIT_USER := env_var("GIT_USER")
+GIT_REPO := `basename $(git rev-parse --show-toplevel)` 
+GIT_REGISTRY := env_var("GIT_REGISTRY")
+
+## Application Configuration
 PORT := env_var("PORT")
 ARGS_TEST := env("_UV_RUN_ARGS_TEST", "")
 ARGS_SERVE := env("_UV_RUN_ARGS_SERVE", "")
@@ -42,6 +51,11 @@ typing:
 # Perform all checks
 [group('qa')]
 check-all: lint cov typing
+
+# Test deployment locally with git hash
+[group('qa')]
+test-deploy: push-container
+    IMAGE_TAG={{GIT_HASH}} GIT_REGISTRY={{GIT_REGISTRY}} GIT_USER={{GIT_USER}} GIT_REPO={{GIT_REPO}} docker compose -f compose.prod.yml up --remove-orphans -d
 
 # Run development server
 [group('run')]
@@ -106,8 +120,16 @@ clear:
 fresh: clear install
 
 # Build Docker image if not exists or if dependencies changed (defaults to host platform for speed)
-[group('lifecycle')]
+[group('deploy')]
 build-container:
-    docker buildx build --platform linux/amd64,linux/arm64 -t {{SERVICE_NAME}}:latest .
+    docker buildx build --platform linux/amd64,linux/arm64 -t {{GIT_REPO}}:latest .
+
+[group('deploy')]
+push-container: build-container
+    #!/usr/bin/env bash
+    docker tag {{GIT_REPO}}:latest {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:latest
+    docker tag {{GIT_REPO}}:latest {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:{{GIT_HASH}}
+    docker push {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:latest
+    docker push {{GIT_REGISTRY}}/{{GIT_USER}}/{{GIT_REPO}}:{{GIT_HASH}}
 
     
