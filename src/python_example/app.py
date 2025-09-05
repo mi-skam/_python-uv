@@ -4,12 +4,13 @@ import sys
 from datetime import datetime
 from importlib.metadata import version
 
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 
 from .models import RequestLog, get_db_session
 
-config = dotenv_values(".env")
+# Load .env file, but allow environment variables to override
+load_dotenv(override=False)
 app = Flask(__name__)
 
 
@@ -22,14 +23,14 @@ def hello():
         "flask_version": version("flask"),
         "python_version": sys.version,
         "environment": os.environ["FLASK_ENV"],
-        "service_name": config["SERVICE_NAME"],
-        "port": config["PORT"],
+        "service_name": os.environ["SERVICE_NAME"],
+        "port": os.environ["PORT"],
         "timestamp": datetime.now().isoformat(),
     }
 
     try:
         # Get database session - will fail if DB is not available
-        database_url = f"postgresql://{config['POSTGRES_USER']}:{config['POSTGRES_PASSWORD']}@{config['POSTGRES_HOST']}:{config['POSTGRES_PORT']}/{config['POSTGRES_DB']}"
+        database_url = f"postgresql://{os.environ['POSTGRES_USER']}:{os.environ['POSTGRES_PASSWORD']}@{os.environ['POSTGRES_HOST']}:{os.environ['POSTGRES_PORT']}/{os.environ['POSTGRES_DB']}"
         session = get_db_session(database_url=database_url)
 
         # Store current request in database

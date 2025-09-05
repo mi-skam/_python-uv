@@ -1,19 +1,16 @@
 # justfile for python-docker-uv project
 
-# Load environment variables from .env file if it exists
+# Load environment variables from .env file
 set dotenv-load := true
 
-## Service Configuration
 SERVICE_NAME := env_var("SERVICE_NAME")
-
-## Git Information
-GIT_HASH := `git rev-parse --short HEAD`
-GIT_USER := env_var("GIT_USER")
-GIT_REPO := `basename $(git rev-parse --show-toplevel)` 
-GIT_REGISTRY := env_var("GIT_REGISTRY")
-
-## Application Configuration
 PORT := env_var("PORT")
+GIT_USER := env_var("GIT_USER")
+GIT_REGISTRY := env_var("GIT_REGISTRY")
+GIT_HASH := `git rev-parse --short HEAD`
+GIT_REPO := `basename $(git rev-parse --show-toplevel)`
+
+HOST := env("HOST", "127.0.0.1")
 ARGS_TEST := env("_UV_RUN_ARGS_TEST", "")
 ARGS_SERVE := env("_UV_RUN_ARGS_SERVE", "")
 
@@ -92,12 +89,12 @@ _http *args:
 # Send HTTP request to development server
 [group('run')]
 req path="" *args:
-    @just _http {{ args }} http://127.0.0.1:{{ PORT }}/{{ path }}
+    @just _http {{ args }} http://{{HOST}}:{{ PORT }}/{{ path }}
 
 # Open development server in web browser
 [group('run')]
 browser:
-    uv run -m webbrowser -t http://127.0.0.1:{{ PORT }}
+    uv run -m webbrowser -t http://{{HOST}}:{{ PORT }}
 
 # Update dependencies
 [group('lifecycle')]

@@ -4,12 +4,17 @@ services:
     ports:
       - "${EXTERNAL_PORT:-8098}:${PORT}"
     environment:
-      - PORT=${PORT}
-      - FLASK_DEBUG=false
-      - FLASK_ENV=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - HOST=${HOST}
+      # Core app settings
+      PORT: ${PORT}
+      SERVICE_NAME: ${SERVICE_NAME}
+      FLASK_ENV: production
+      FLASK_DEBUG: "false"
+      # Database connection (using internal Docker network)
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres  # Use Docker service name
+      POSTGRES_PORT: "5432"  # Internal port
     depends_on:
       postgres:
         condition: service_healthy
